@@ -1,0 +1,17 @@
+pub const INFURA_WSS_URL: &str = "wss://mainnet.infura.io/ws/v3/fce68e74246240d3896b8f17081321ef";
+pub const INFURA_URL: &str = "https://mainnet.infura.io/v3/fce68e74246240d3896b8f17081321ef";
+
+pub const TOPIC_V2_PAIR_CREATED: &str = "0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9";
+
+pub const TOPIC_V3_NEW_TOKEN: &str = "0xe1cf7aada88886bb170a3d9ac4236616de96205174f63e5506fdd6e24582d836";
+
+pub const TOPIC_OWNER_TRANSFER: &str = "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0";
+pub const TOPIC_DEPOSIT: &str = "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c";
+pub const TOPIC_MINT: &str = "0x4c209b5fc8ad50758f13e2e1088ba56a560dff690a1c6fef26394f4c03821c4f";
+pub const TOPIC_SYNC: &str = "0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1";
+pub const TOPIC_SWAP: &str = "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822";
+pub const TOPIC_MAX_LIMIT: &str = "0x947f344d56e1e8c70dc492fb94c4ddddd490c016aab685f5e7e47b2e85cb44cf";
+pub const TOPIC_APPROVAL: &str = "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925";
+
+pub const TOPIC_TRANSFER: &str = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+pub const TOPIC_ZERO_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";

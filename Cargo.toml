@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.31"
 env_logger = "0.10.1"
 ethbloom = "0.13.0"
 ethereum-types = "0.14.1"
-ethers = "2.0.11"
 futures = "0.3.29"
 hex = "0.4.3"
 log = "0.4.20"
