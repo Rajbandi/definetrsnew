@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.31"
+async-trait = "0.1.74"
+chrono = {version ="0.4.31", features = ["serde"]}
+dotenv = "0.15.0"
 env_logger = "0.10.1"
 ethbloom = "0.13.0"
 ethereum-types = "0.14.1"
@@ -14,7 +16,9 @@ futures = "0.3.29"
 hex = "0.4.3"
 log = "0.4.20"
 reqwest = "0.11.22"
-serde = "1.0.192"
+serde = {version ="1.0.192", features = ["derive"]}
+serde_json = "1.0.108"
+sqlx = {version = "0.7.2", features = ["sqlite", "runtime-tokio-native-tls", "chrono", "json"]}
 tiny-keccak = "2.0.2"
 tokio = { version="1.34.0", features=["full"]}
 web3 = "0.19.0"
