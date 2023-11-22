@@ -1,5 +1,6 @@
 use log::{info, error};
 use futures::pin_mut;
+use serde::de;
 use tokio::signal;
 
 use std::{
@@ -117,17 +118,18 @@ impl Web3Client {
             error!("Error: {}", symbol.err().unwrap());
             return Err(Web3Error::InvalidResponse("Invalid function symbol".into()));
         }
-        let decimals: Result<u8, _> = contract.query("decimals", (), None, Options::default(), None).await;
-        if decimals.is_err() {
-            error!("Error: {}", decimals.err().unwrap());
-            return Err(Web3Error::InvalidResponse("Invalid function decimals".into()));
-        }
-        let total_supply: Result<U256, _> = contract.query("totalSupply", (), None, Options::default(), None).await;
-        if total_supply.is_err() {
-            error!("Error: {}", total_supply.err().unwrap());
-            return Err(Web3Error::InvalidResponse("Invalid function totalSupply".into()));
-        }
         
+        let mut total_supply: Result<U256, _> = contract.query("totalSupply", (), None, Options::default(), None).await;
+        if !total_supply.is_ok() {
+            error!("Error: {}", total_supply.err().unwrap());
+            //return Err(Web3Error::InvalidResponse("Invalid function totalSupply".into()));
+            total_supply = Ok(U256::from(0));
+        }
+        let mut decimals: Result<u8, _> = contract.query("decimals", (), None, Options::default(), None).await;
+        if !decimals.is_ok() {
+            error!("Error: {}", decimals.err().unwrap());
+            decimals = Ok(18);
+        }
 
         let result = (name.unwrap(), symbol.unwrap(), decimals.unwrap(), total_supply.unwrap());
         info!("query contract for address: {:?} result: {:?}", contract_address, result);

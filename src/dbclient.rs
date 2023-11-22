@@ -18,8 +18,14 @@ impl DbClientSqlite {
 #[async_trait]
 impl DatabaseClient for DbClientSqlite {
     async fn add_token(&self, token_info: &TokenInfo) -> Result<(), sqlx::Error> {
+
+    
+        //Please rewrite sqlx::query!() belowto use updated table above
+
         sqlx::query!(
-            "INSERT INTO token_info (contract_address, name, symbol, decimals, total_supply, owner, is_verified, is_renounced, is_active, info_retry_count, data, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO token_info (contract_address, name, symbol, decimals, total_supply, owner, is_verified, is_renounced, is_active, is_v3, is_scam, is_rug_pull, is_dump_risk,  retry_count, previous_contracts, 
+                liquidity_pool_address, liqudity_period, initial_liquidity, current_liquidity, is_liquidy_locked, locked_liquidity, is_tax_modifiable, sell_tax, buy_tax, transfer_tax, score, holders_count,
+                 data, code, error, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             token_info.contract_address,
             token_info.name,
             token_info.symbol,
@@ -29,8 +35,27 @@ impl DatabaseClient for DbClientSqlite {
             token_info.is_verified,
             token_info.is_renounced,
             token_info.is_active,
-            token_info.info_retry_count,
+            token_info.is_v3,
+            token_info.is_scam,
+            token_info.is_rug_pull,
+            token_info.is_dump_risk,
+            token_info.retry_count,
+            token_info.previous_contracts,
+            token_info.liquidity_pool_address,
+            token_info.liqudity_period,
+            token_info.initial_liquidity,
+            token_info.current_liquidity,
+            token_info.is_liquidy_locked,
+            token_info.locked_liquidity,
+            token_info.is_tax_modifiable,
+            token_info.sell_tax,
+            token_info.buy_tax,
+            token_info.transfer_tax,
+            token_info.score,
+            token_info.holders_count,
             token_info.data,
+            token_info.code,
+            token_info.error,
             token_info.date_created,
             token_info.date_updated
         )
@@ -59,7 +84,11 @@ impl DatabaseClient for DbClientSqlite {
     // Example: Updating a token
     async fn update_token(&self, token_info: &TokenInfo) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE token_info SET name = ?, symbol = ?, decimals = ?, total_supply = ?, owner = ?, is_verified = ?, is_renounced = ?, is_active = ?, info_retry_count = ?, data = ?, date_updated = ? WHERE contract_address = ?",
+            "UPDATE token_info SET name = ?, symbol = ?, decimals = ?, total_supply = ?, owner = ?, is_verified = ?, is_renounced = ?, is_active = ?, is_v3 = ?,
+            is_scam = ?, is_rug_pull = ?, is_dump_risk = ?, previous_contracts = ?, liquidity_pool_address = ?, liqudity_period = ?, initial_liquidity = ?, current_liquidity = ?,
+            retry_count = ?, 
+            sell_tax = ?, buy_tax = ?, transfer_tax = ?, score = ?, holders_count = ?,
+            data = ?, code = ?, error = ?, date_updated = ? WHERE contract_address = ?",
             token_info.name,
             token_info.symbol,
             token_info.decimals,
@@ -68,8 +97,24 @@ impl DatabaseClient for DbClientSqlite {
             token_info.is_verified,
             token_info.is_renounced,
             token_info.is_active,
-            token_info.info_retry_count,
+            token_info.is_v3,
+            token_info.is_scam,
+            token_info.is_rug_pull,
+            token_info.is_dump_risk,
+            token_info.previous_contracts,
+            token_info.liquidity_pool_address,
+            token_info.liqudity_period,
+            token_info.initial_liquidity,
+            token_info.current_liquidity,
+            token_info.retry_count,
+            token_info.sell_tax,
+            token_info.buy_tax,
+            token_info.transfer_tax,
+            token_info.score,
+            token_info.holders_count,
             token_info.data,
+            token_info.code,
+            token_info.error,
             token_info.date_updated,
             token_info.contract_address
         )
@@ -100,14 +145,14 @@ impl DatabaseClient for DbClientSqlite {
             if token_info.is_verified && !token.is_verified {
                 token.is_verified = token_info.is_verified;
             }
-            if token.is_renounced && !token.is_renounced {
+            if token_info.is_renounced && !token.is_renounced {
                 token.is_renounced = token_info.is_renounced;
             }
-            if token.is_active && !token.is_active{
+            if token_info.is_active && !token.is_active{
                 token.is_active = token_info.is_active;
             }
-            if token_info.info_retry_count > token.info_retry_count {
-                token.info_retry_count = token_info.info_retry_count;
+            if token_info.retry_count > token.retry_count {
+                token.retry_count = token_info.retry_count;
             }
             if token_info.owner.is_some() && token.owner.is_none() {
                 token.owner = token_info.owner.clone();
@@ -124,6 +169,57 @@ impl DatabaseClient for DbClientSqlite {
             if !token_info.total_supply.is_empty() && token_info.total_supply != token.total_supply {
                 token.total_supply = token_info.total_supply.clone();
             }
+            if token_info.is_v3 && !token.is_v3 {
+                token.is_v3 = token_info.is_v3;
+            }
+            if token_info.is_scam && !token.is_scam {
+                token.is_scam = token_info.is_scam;
+            }
+            if token_info.is_rug_pull && !token.is_rug_pull {
+                token.is_rug_pull = token_info.is_rug_pull;
+            }
+            if token_info.is_dump_risk && !token.is_dump_risk {
+                token.is_dump_risk = token_info.is_dump_risk;
+            }
+            if token_info.previous_contracts > 0 && token_info.previous_contracts != token.previous_contracts {
+                token.previous_contracts = token_info.previous_contracts;
+            }
+            if token_info.liquidity_pool_address.is_some() && token.liquidity_pool_address.is_none() {
+                token.liquidity_pool_address = token_info.liquidity_pool_address.clone();
+            }
+            if token_info.liqudity_period > 0 && token_info.liqudity_period != token.liqudity_period {
+                token.liqudity_period = token_info.liqudity_period;
+            }
+            if token_info.initial_liquidity > 0.0 && token_info.initial_liquidity != token.initial_liquidity {
+                token.initial_liquidity = token_info.initial_liquidity;
+            }
+            if token_info.current_liquidity > 0.0 && token_info.current_liquidity != token.current_liquidity {
+                token.current_liquidity = token_info.current_liquidity;
+            }
+            if token_info.is_liquidy_locked && !token.is_liquidy_locked {
+                token.is_liquidy_locked = token_info.is_liquidy_locked;
+            }
+            if token_info.locked_liquidity > 0.0 && token_info.locked_liquidity != token.locked_liquidity {
+                token.locked_liquidity = token_info.locked_liquidity;
+            }
+            if token_info.is_tax_modifiable && !token.is_tax_modifiable {
+                token.is_tax_modifiable = token_info.is_tax_modifiable;
+            }
+            if token_info.sell_tax > 0.0 && token_info.sell_tax != token.sell_tax {
+                token.sell_tax = token_info.sell_tax;
+            }
+            if token_info.buy_tax > 0.0 && token_info.buy_tax != token.buy_tax {
+                token.buy_tax = token_info.buy_tax;
+            }
+            if token_info.transfer_tax > 0.0 && token_info.transfer_tax != token.transfer_tax {
+                token.transfer_tax = token_info.transfer_tax;
+            }
+            if token_info.score > 0 && token_info.score != token.score {
+                token.score = token_info.score;
+            }
+            if token_info.holders_count > 0 && token_info.holders_count != token.holders_count {
+                token.holders_count = token_info.holders_count;
+            }
             if token_info.data.is_some()
             {
                 if token.data.is_none() || token_info.data != token.data {
@@ -131,7 +227,18 @@ impl DatabaseClient for DbClientSqlite {
                 }
             }
             
+            if token_info.code.is_some() {
+                if token.code.is_none() || token_info.code != token.code {
+                    token.code = token_info.code.clone();
+                }
+            }
             
+            if token_info.error.is_some() {
+                if token.error.is_none() || token_info.error != token.error {
+                    token.error = token_info.error.clone();
+                }
+            }
+
             self.update_token(&token).await
         } else {
             self.add_token(token_info).await
