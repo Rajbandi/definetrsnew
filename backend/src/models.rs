@@ -50,4 +50,7 @@ pub struct TokenQuery {
     pub is_active: Option<bool>,
     pub from_date: Option<NaiveDateTime>,
     pub to_date: Option<NaiveDateTime>,
+    pub sort_by: Option<String>,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
 }

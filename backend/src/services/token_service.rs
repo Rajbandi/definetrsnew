@@ -1,13 +1,17 @@
+use std::f32::consts::E;
 use std::{str::FromStr, sync::Arc};
 
-use crate::dbtraits::DatabaseClient;
+use crate::clients::DatabaseClient;
+use crate::clients::Web3Client;
 use crate::models::TokenQuery;
-use crate::web3_client::Web3Client;
+use crate::services::WebSocketService;
+use crate::utils::TokenUtil;
 use crate::{constants::*, models::TokenInfo};
+use chrono::format::format;
 use log::info;
 
 use web3::contract;
-use web3::types::{Address, Log, H256};
+use web3::types::{Address, Log, H256, U256};
 
 pub struct TokenService {
     web3_client: Web3Client, // Assuming Web3Client is defined elsewhere
@@ -40,19 +44,6 @@ impl TokenService {
 
     // Process log function
     async fn process_log(&self, log: Log) {
-        // info!("----------------------------------------");
-
-        // info!("Block Number: {:?}", log.block_number.unwrap());
-        // info!("block hash: {:?}", log.block_hash.unwrap());
-        // info!("Transaction Index: {:?}", log.transaction_index.unwrap());
-
-        // info!("Transaction Hash: {:?}", log.transaction_hash.unwrap());
-        // info!("Log Index: {:?}", log.log_index.unwrap());
-        // info!("log address: {:?}", log.address);
-        // info!("From Address: {:?}", log.topics[1]);
-        // info!("To Address: {:?}", log.topics[2]);
-        // info!("Data: {:?}", format!("0x{}", hex::encode(log.data.0)));
-
         info!("Processing log...");
 
         let mut token_info = TokenInfo {
@@ -69,6 +60,7 @@ impl TokenService {
                     let pair_result = self.parse_new_token(&log);
                     if let Ok((contract_address, token0_address, token1_address)) = pair_result {
                         token_info.contract_address = contract_address;
+                        token_info.is_v3 = false;
                     }
                 }
                 topic if topic == &H256::from_str(TOPIC_V3_NEW_TOKEN).unwrap() => {
@@ -77,6 +69,7 @@ impl TokenService {
                     let pair_result = self.parse_new_token(&log);
                     if let Ok((contract_address, token0_address, token1_address)) = pair_result {
                         token_info.contract_address = contract_address;
+                        token_info.is_v3 = true;
                     }
                 }
                 topic if topic == &H256::from_str(TOPIC_OWNER_TRANSFER).unwrap() => {
@@ -130,14 +123,31 @@ impl TokenService {
         let addr = contract_address.unwrap();
 
         if token_info.name.is_empty() || token_info.symbol.is_empty() {
-            let (name, symbol, decimals, total_supply) =
+            let (name, symbol, decimals, total_supply, code) =
                 self.web3_client.query_contract(addr, None).await?;
 
-            token_info.name = name;
-            token_info.symbol = symbol;
-            token_info.decimals = decimals as i32;
-            token_info.total_supply = format!("{:?}", total_supply);
-            token_info.date_created = chrono::Utc::now().naive_utc();
+            if total_supply > U256::from(0) {
+                let code_clone = code.clone();
+                token_info.name = name;
+                token_info.symbol = symbol;
+                token_info.decimals = decimals as i32;
+                token_info.total_supply = format!("{:?}", total_supply);
+                token_info.date_created = chrono::Utc::now().naive_utc();
+
+                if code_clone.is_some() {
+                    let code_str = code.clone().unwrap();
+                    let code_hex = TokenUtil::extract_hex_string(code_str.as_str());
+                    if code_hex.is_some() {
+                        token_info.code = Some(code_hex.unwrap());
+                    } else {
+                        token_info.code = Some(code.unwrap());
+                    }
+                }
+               // token_info.is_verified = !code_clone.is_none() && !code_clone.unwrap().is_empty()
+            } else {
+                info!("Total supply is zero************");
+                return Ok(false);
+            }
         }
 
         let result = db.save_token(token_info).await;
@@ -145,6 +155,13 @@ impl TokenService {
             info!("Error saving token info to database: {}", e);
             return Ok(false);
         }
+        let message = serde_json::json!({
+            "type": "tokenupdate",
+            "data": token_info
+        });
+
+        WebSocketService::send_to_general_clients(&message.to_string()).await;
+
         Ok(true)
     }
 

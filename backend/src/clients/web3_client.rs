@@ -28,7 +28,7 @@ impl Web3Client {
         info!("Connected to web3 at: {}", api_url);
 
         info!("Loading generic ABI");
-        let generic_abi = include_bytes!("erc20_abi.json").to_vec();
+        let generic_abi = include_bytes!("../erc20_abi.json").to_vec();
         info!("Loaded generic ABI");
         Ok(Web3Client {
             web3: Web3::new(transport),
@@ -86,7 +86,7 @@ impl Web3Client {
         Ok(())
     }
 
-    pub async fn query_contract(&self, contract_address: Address, abi_path: Option<&str>) -> Result<(String, String, u8, U256), web3::Error> {
+    pub async fn query_contract(&self, contract_address: Address, abi_path: Option<&str>) -> Result<(String, String, u8, U256, Option<String>), web3::Error> {
         
         info!("Querying contract for address: {:?}", contract_address);
 
@@ -98,15 +98,21 @@ impl Web3Client {
             info!("Using generic ABI");
             self.generic_abi.clone()
         };
-
-        if !self.is_contract_deployed(contract_address).await? {
+        let code_result = self.is_contract_deployed(contract_address).await?;
+        if !code_result.0{
             return Err(Web3Error::InvalidResponse("No contract found at this address".into()));
         }
 
         info!("Contract is deployed at this address");
 
         let contract = Contract::from_json(self.web3.eth(), contract_address, &abi.0).unwrap();
-
+       
+        let mut total_supply: Result<U256, _> = contract.query("totalSupply", (), None, Options::default(), None).await;
+        if !total_supply.is_ok() {
+            error!("Error: {}", total_supply.err().unwrap());
+            return Err(Web3Error::InvalidResponse("Invalid function totalSupply, not an ERC20 token".into()));
+         //   total_supply = Ok(U256::from(0));
+        }
         // Query the contract details
         let name: Result<String, _> = contract.query("name", (), None, Options::default(), None).await;
         if name.is_err() {
@@ -119,43 +125,38 @@ impl Web3Client {
             return Err(Web3Error::InvalidResponse("Invalid function symbol".into()));
         }
         
-        let mut total_supply: Result<U256, _> = contract.query("totalSupply", (), None, Options::default(), None).await;
-        if !total_supply.is_ok() {
-            error!("Error: {}", total_supply.err().unwrap());
-            //return Err(Web3Error::InvalidResponse("Invalid function totalSupply".into()));
-            total_supply = Ok(U256::from(0));
-        }
+      
         let mut decimals: Result<u8, _> = contract.query("decimals", (), None, Options::default(), None).await;
         if !decimals.is_ok() {
             error!("Error: {}", decimals.err().unwrap());
             decimals = Ok(18);
         }
 
-        let result = (name.unwrap(), symbol.unwrap(), decimals.unwrap(), total_supply.unwrap());
+        let result = (name.unwrap(), symbol.unwrap(), decimals.unwrap(), total_supply.unwrap(), code_result.1);
         info!("query contract for address: {:?} result: {:?}", contract_address, result);
 
         Ok(result)
     }
     
-    async fn is_contract_deployed(&self,  contract_address: Address) -> Result<bool, web3::Error> {
+    async fn is_contract_deployed(&self,  contract_address: Address) -> Result<(bool,Option<String>), web3::Error> {
         info!("Checking if contract is deployed at address: {:?}", contract_address);
         match self.web3.eth().code(contract_address, None).await {
             Ok(code) => {
                 if code.0.is_empty() {
                     info!("No contract found at this address");
-                    Ok(false)
+                    Ok((false, None))
                 } else 
                 {
-                    let code_str = format!("{:?}", code);
+                    let code_str = format!("{:?}", code);                    
                     info!("Code length: {}", code_str.len());
                     if code_str != "0x"
                     {
                         info!("Contract is deployed at this address");
-                        Ok(true)
+                        Ok((true, Some(code_str)))
                     }
                     else {
                         info!("Contract is not deployed at this address");
-                        Ok(false)
+                        Ok((false, None))
                     }
                 }
                 

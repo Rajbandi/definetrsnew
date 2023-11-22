@@ -1,4 +1,4 @@
-use crate::{dbtraits::DatabaseClient, models::{TokenInfo, TokenQuery}};
+use crate::{clients::DatabaseClient, models::{TokenInfo, TokenQuery}};
 
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
@@ -257,13 +257,45 @@ impl DatabaseClient for DbClientSqlite {
         if let Some(ref contract_address) = query.contract_address {
             sql_query.push_str(&format!(" AND contract_address = '{}'", contract_address));
         }
-        // Add other conditions similarly...
+        if let Some(is_verified) = query.is_verified {
+            sql_query.push_str(&format!(" AND is_verified = {}", is_verified));
+        }
+        if let Some(is_renounced) = query.is_renounced {
+            sql_query.push_str(&format!(" AND is_renounced = {}", is_renounced));
+        }
+        if let Some(is_active) = query.is_active {
+            sql_query.push_str(&format!(" AND is_active = {}", is_active));
+        }
+        
+        match (query.from_date, query.to_date) {
+            (Some(from_date), Some(to_date)) => {
+                sql_query.push_str(&format!(
+                    " AND date_created BETWEEN '{}' AND '{}'",
+                    from_date, to_date
+                ));
+            },
+            (Some(from_date), None) => {
+                sql_query.push_str(&format!(" AND date_created >= '{}'", from_date));
+            },
+            (None, Some(to_date)) => {
+                sql_query.push_str(&format!(" AND date_created <= '{}'", to_date));
+            },
+            _ => {}
+        }
 
-        if let (Some(from_date), Some(to_date)) = (query.from_date, query.to_date) {
-            sql_query.push_str(&format!(
-                " AND date_updated BETWEEN '{}' AND '{}'",
-                from_date, to_date
-            ));
+        if let Some(ref sort_by) = query.sort_by {
+            // Ensure to sanitize or validate `sort_by` to prevent SQL injection
+            sql_query.push_str(&format!(" ORDER BY {}", sort_by));
+        }
+    
+        // Limit
+        if let Some(limit) = query.limit {
+            sql_query.push_str(&format!(" LIMIT {}", limit));
+        }
+    
+        // Offset
+        if let Some(offset) = query.offset {
+            sql_query.push_str(&format!(" OFFSET {}", offset));
         }
 
         sqlx::query_as::<_, TokenInfo>(&sql_query)

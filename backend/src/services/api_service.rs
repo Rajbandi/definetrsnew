@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
-use crate::{token_service::TokenService, models::TokenQuery};
+use crate::{services::TokenService, models::TokenQuery};
 
 pub struct ApiService {
     pub token_service: Arc<TokenService>,

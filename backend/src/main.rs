@@ -1,7 +1,7 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use definetrsnew::{
-    api_service::ApiService, dbclient::DbClientSqlite, dbtraits::DatabaseClient,
-    token_service::TokenService, web3_client::Web3Client, websocket::{websocket_route, ws_admin_index, ws_general_index},
+    services::ApiService, clients::DbClientSqlite, clients::DatabaseClient,
+    services::TokenService, clients::Web3Client, websocket::{ws_admin_index, ws_general_index},
 };
 use dotenv::dotenv;
 use log::{error, info};
