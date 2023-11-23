@@ -1,6 +1,6 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use definetrsnew::{
-    services::ApiService, clients::DbClientSqlite, clients::DatabaseClient,
+    services::ApiService, clients::{DbClientSqlite, EtherscanClient}, clients::DatabaseClient,
     services::TokenService, clients::Web3Client, websocket::{ws_admin_index, ws_general_index},
 };
 use dotenv::dotenv;
@@ -22,9 +22,11 @@ async fn main() -> web3::Result<()> {
     // let token_service = TokenService::new(client, db_client);
     // let arc_service = Arc::new(token_service);
 
-    let token_service = Arc::new(TokenService::new(web3_client, db_client));
-  
+    let etherscan_api_key = std::env::var("ETHERSCAN_API_KEY").expect("ETHERSCAN_API_KEY must be set");
+    let etherscan_client = EtherscanClient::new(etherscan_api_key);
 
+    let token_service = Arc::new(TokenService::new(web3_client, db_client, etherscan_client));
+  
     let token_service_clone = token_service.clone();
     tokio::spawn(async move {
         match token_service_clone.sync().await {

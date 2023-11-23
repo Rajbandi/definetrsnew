@@ -23,15 +23,16 @@ impl DatabaseClient for DbClientSqlite {
         //Please rewrite sqlx::query!() belowto use updated table above
 
         sqlx::query!(
-            "INSERT INTO token_info (contract_address, name, symbol, decimals, total_supply, owner, is_verified, is_renounced, is_active, is_v3, is_scam, is_rug_pull, is_dump_risk,  retry_count, previous_contracts, 
+            "INSERT INTO token_info (contract_address, name, symbol, decimals, total_supply, owner, creator, is_verified, is_renounced, is_active, is_v3, is_scam, is_rug_pull, is_dump_risk,  retry_count, previous_contracts, 
                 liquidity_pool_address, liqudity_period, initial_liquidity, current_liquidity, is_liquidy_locked, locked_liquidity, is_tax_modifiable, sell_tax, buy_tax, transfer_tax, score, holders_count,
-                 data, code, error, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 data, code, abi, error, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             token_info.contract_address,
             token_info.name,
             token_info.symbol,
             token_info.decimals,
             token_info.total_supply,
             token_info.owner,
+            token_info.creator,
             token_info.is_verified,
             token_info.is_renounced,
             token_info.is_active,
@@ -55,6 +56,7 @@ impl DatabaseClient for DbClientSqlite {
             token_info.holders_count,
             token_info.data,
             token_info.code,
+            token_info.abi,
             token_info.error,
             token_info.date_created,
             token_info.date_updated
@@ -84,16 +86,17 @@ impl DatabaseClient for DbClientSqlite {
     // Example: Updating a token
     async fn update_token(&self, token_info: &TokenInfo) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE token_info SET name = ?, symbol = ?, decimals = ?, total_supply = ?, owner = ?, is_verified = ?, is_renounced = ?, is_active = ?, is_v3 = ?,
+            "UPDATE token_info SET name = ?, symbol = ?, decimals = ?, total_supply = ?, owner = ?, creator = ?, is_verified = ?, is_renounced = ?, is_active = ?, is_v3 = ?,
             is_scam = ?, is_rug_pull = ?, is_dump_risk = ?, previous_contracts = ?, liquidity_pool_address = ?, liqudity_period = ?, initial_liquidity = ?, current_liquidity = ?,
             retry_count = ?, 
             sell_tax = ?, buy_tax = ?, transfer_tax = ?, score = ?, holders_count = ?,
-            data = ?, code = ?, error = ?, date_updated = ? WHERE contract_address = ?",
+            data = ?, code = ?, abi = ?, error = ?, date_updated = ? WHERE contract_address = ?",
             token_info.name,
             token_info.symbol,
             token_info.decimals,
             token_info.total_supply,
             token_info.owner,
+            token_info.creator,
             token_info.is_verified,
             token_info.is_renounced,
             token_info.is_active,
@@ -114,6 +117,7 @@ impl DatabaseClient for DbClientSqlite {
             token_info.holders_count,
             token_info.data,
             token_info.code,
+            token_info.abi,
             token_info.error,
             token_info.date_updated,
             token_info.contract_address
@@ -156,6 +160,9 @@ impl DatabaseClient for DbClientSqlite {
             }
             if token_info.owner.is_some() && token.owner.is_none() {
                 token.owner = token_info.owner.clone();
+            }
+            if token_info.creator.is_some() && token.creator.is_none() {
+                token.creator = token_info.creator.clone();
             }
             if !token_info.name.is_empty() && token_info.name != token.name {
                 token.name = token_info.name.clone();
@@ -230,6 +237,12 @@ impl DatabaseClient for DbClientSqlite {
             if token_info.code.is_some() {
                 if token.code.is_none() || token_info.code != token.code {
                     token.code = token_info.code.clone();
+                }
+            }
+            
+            if token_info.abi.is_some() {
+                if token.abi.is_none() || token_info.abi != token.abi {
+                    token.abi = token_info.abi.clone();
                 }
             }
             

@@ -1,7 +1,7 @@
 use std::f32::consts::E;
 use std::{str::FromStr, sync::Arc};
 
-use crate::clients::DatabaseClient;
+use crate::clients::{DatabaseClient, EtherscanClient};
 use crate::clients::Web3Client;
 use crate::models::TokenQuery;
 use crate::services::WebSocketService;
@@ -10,19 +10,22 @@ use crate::{constants::*, models::TokenInfo};
 use chrono::format::format;
 use log::info;
 
+use serde_json::{json, Value};
 use web3::contract;
 use web3::types::{Address, Log, H256, U256};
 
 pub struct TokenService {
     web3_client: Web3Client, // Assuming Web3Client is defined elsewhere
     db_client: Arc<dyn DatabaseClient + 'static>,
+    etherscan_client: EtherscanClient,
 }
 
 impl TokenService {
-    pub fn new(web3_client: Web3Client, db_client: Arc<dyn DatabaseClient>) -> Self {
+    pub fn new(web3_client: Web3Client, db_client: Arc<dyn DatabaseClient>, etherscan_client: EtherscanClient) -> Self {
         TokenService {
             web3_client,
             db_client,
+            etherscan_client,
         }
     }
     pub async fn sync(self: Arc<Self>) -> web3::Result<()> {
@@ -147,6 +150,38 @@ impl TokenService {
             } else {
                 info!("Total supply is zero************");
                 return Ok(false);
+            }
+        }
+
+        
+        if !token_info.name.is_empty() && !token_info.contract_address.is_empty() {
+            if !token_info.is_verified {
+                let addr_str = format!("{:?}", addr);
+                info!("*************** Getting token verified for address: {:?}", addr_str);
+                let abi_response = self.etherscan_client.get_token_verified(addr_str.clone()).await;
+                match abi_response {
+                    Ok(abi_response) => {
+                        info!(" Token verified: {:?}", abi_response.status);
+                        if abi_response.status == "1" {
+                            token_info.is_verified = true;
+                            if abi_response.result.is_empty() {
+                                info!("No ABI found for address: {:?}", addr_str);
+                            }
+                            else {
+                                info!("Parsing abi result");
+                                let abi:  Result<Value, serde_json::Error> = serde_json::from_str(&abi_response.result);
+                                match abi {
+                                    Ok(parsed_json) => {
+                                        info!("ABI: {:?}", parsed_json);
+                                        token_info.abi = Some(parsed_json.to_string());
+                                    },
+                                    Err(e) => info!("Failed to parse JSON: {:?}", e),
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => info!("Error getting token verified: {}", e),
+                }
             }
         }
 

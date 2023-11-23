@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS token_info (
     decimals INTEGER NOT NULL,
     total_supply TEXT NOT NULL,
     owner TEXT,
+    creator TEXT,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_renounced BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS token_info (
     is_v3 BOOLEAN NOT NULL DEFAULT FALSE,
     retry_count INTEGER NOT NULL DEFAULT 0,
     code TEXT, 
+    abi TEXT,
     data TEXT , -- Storing JSON as text
     error TEXT,
     date_created DATETIME NOT NULL,
