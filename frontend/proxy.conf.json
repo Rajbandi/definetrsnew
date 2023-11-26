@@ -1,0 +1,16 @@
+{
+    "/api": {
+      "target": "http://localhost:8080", // Replace with the actual URL of your backend
+      "secure": false,
+      "ws":false,
+      "changeOrigin": true,
+      "logLevel": "debug",
+      "pathRewrite": {"^/api" : ""}
+    },
+    "/ws": {
+        "target": "ws://localhost:8080", // Your WebSocket server URL
+        "ws": true,
+        "secure": false,
+        "changeOrigin": true
+      }
+  }

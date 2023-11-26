@@ -1,0 +1,41 @@
+export interface TokenInfo {
+        contractAddress: string;
+    fullName: string;
+        name: string;
+        symbol: string;
+        decimals: number;
+        totalSupply: string;
+        owner?: any;
+        creator?: any;
+        isVerified:boolean;
+        isRenounced:boolean;
+        isActive:boolean;
+        isV3:boolean;
+        isScam:boolean;
+        isRugPull:boolean;
+        isDumpRisk:boolean;
+        retryCount: number;
+        previousContracts: number;
+        liquidityPoolAddress?: any;
+        liqudityPeriod: number;
+        initialLiquidity: number;
+        currentLiquidity: number;
+        isLiquidyLocked:boolean;
+        lockedLiquidity: number;
+        isTaxModifiable:boolean;
+        sellTax: number;
+        buyTax: number;
+        transferTax: number;
+        score: number;
+        holdersCount: number;
+        data?: any;
+        code: string;
+        abi: string;
+        error?: any;
+        dateCreated: Date;
+        dateUpdated?: Date;
+        isUpdated?: boolean;
+        isNew?: boolean;
+        createdString?: string;
+    }
+

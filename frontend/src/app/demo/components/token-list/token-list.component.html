@@ -1,0 +1,160 @@
+
+<!-- Provide table below with TokenInfo primeng table with expandable rows
+
+THis is rust code to get the token list from the contract
+pub struct TokenInfo {
+    pub contract_address: String,
+    pub name: String,
+    pub symbol: String,
+    pub decimals: i32,
+    pub total_supply: String,
+    pub owner: Option<String>,
+    pub creator: Option<String>,
+    pub is_verified: bool,
+    pub is_renounced: bool,
+    pub is_active: bool,
+    pub is_v3: bool,
+    pub is_scam: bool,
+    pub is_rug_pull: bool,
+    pub is_dump_risk: bool,
+    pub retry_count: i32,
+    pub previous_contracts: i32,
+    pub liquidity_pool_address: Option<String>,
+    pub liqudity_period: i32,
+    pub initial_liquidity: f32,
+    pub current_liquidity: f32,
+    pub is_liquidy_locked: bool,
+    pub locked_liquidity: f32,
+    pub is_tax_modifiable: bool,
+    pub sell_tax: f32,
+    pub buy_tax: f32,
+    pub transfer_tax: f32,
+    pub score: i32,
+    pub holders_count: i32,
+    pub data: Option<serde_json::Value>,
+    pub code: Option<String>,
+    pub abi: Option<String>,
+    pub error: Option<String>,
+    pub date_created: NaiveDateTime,
+    pub date_updated: Option<NaiveDateTime>,
+}
+
+-->
+<!-- provide loading -->
+
+<!-- provide few fields in expanded row-->
+
+<!-- <p-table [value]="tokens" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,20,50]" [responsive]="true" >
+    <ng-template pTemplate="header">
+        <tr>
+            <th>Contract Address</th>
+            <th>Name</th>
+            <th>Symbol</th>
+            <th>Decimals</th>
+            <th>Total Supply</th>
+            <th>Is Verified</th>
+            <th>Is Renounced</th>
+            <th>Is Active</th>
+            <th>Is V3</th>
+            <th>Is Scam</th>
+            <th>Is Rug Pull</th>
+            <th>Is Dump Risk</th>
+
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-token>
+        <tr>
+            <td>{{token.contract_address}}</td>
+            <td>{{token.name}}</td>
+            <td>{{token.symbol}}</td>
+            <td>{{token.decimals}}</td>
+            <td>{{token.total_supply}}</td>
+            <td>{{token.is_verified}}</td>
+            <td>{{token.is_renounced}}</td>
+            <td>{{token.is_active}}</td>
+            <td>{{token.is_v3}}</td>
+            <td>{{token.is_scam}}</td>
+            <td>{{token.is_rug_pull}}</td>
+            <td>{{token.is_dump_risk}}</td>
+
+        </tr>
+    </ng-template>
+</p-table> -->
+<p-toast></p-toast>
+
+<p-table [value]="tokens" [paginator]="true" [rows]="10"  [loading]="loading" [rowHover]="true" styleClass="p-datatable-gridlines token-list"
+[rowsPerPageOptions]="[10,20,50]" [responsive]="true" responsiveLayout="scroll">
+<ng-template pTemplate="caption">
+    <div class="flex justify-content-between flex-column sm:flex-row">
+        <div>Recently Added Tokens</div>
+        <div>
+            <span  class="pi pi-check-circle token-icon"></span> Verified
+            <span class="pi pi-ban token-icon"></span>Renounced
+        </div>
+    </div>
+</ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="min-width: 12rem">Name
+        </th>
+        <th style="min-width: 9rem">Created
+
+        </th>
+        <th style="min-width: 5rem">Score
+
+        </th>
+        <th style="min-width: 12rem">Status
+        </th> <!-- Column for boolean fields -->
+
+        <th style="min-width: 12rem">Links
+
+        </th>
+        <!-- More important fields -->
+    </ng-template>
+    <ng-template pTemplate="body" let-token>
+      <tr [ngClass]="{'highlight': token.isNew}">
+        <td style='flex: 0 0 120px;'>{{ token.fullName }}
+
+        </td>
+        <td>
+            {{ token.createdString }}
+        </td>
+        <td>
+
+        </td>
+        <!-- More important fields -->
+        <td>
+          <!-- Icons for boolean fields -->
+          <span *ngIf="!token.isVerified" class="pi pi-check-circle token-icon" style="color: red;" title="Not Verified"></span>
+            <span *ngIf="token.isVerified" class="pi pi-check-circle token-icon" style="color: green;" title="Verified"></span>
+            <span *ngIf="!token.isRenounced" class="pi pi-ban token-icon" style="color: red;" title="Not Renounced"></span>
+            <span *ngIf="token.isRenounced" class="pi pi-ban token-icon" style="color: orange;" title="Renounced"></span>
+            <span *ngIf="token.isScam" class="pi pi-times-circle token-icon" style="color: red;" title="Scam"></span>
+            <span *ngIf="token.isBlacklisted" class="pi pi-lock token-icon" style="color: black;" title="Blacklisted"></span>
+
+          <!-- Add icons for other boolean fields similarly -->
+        </td>
+
+        <td>
+            <span class="pi pi-copy token-icon" style="cursor: pointer;" (click)="copyAddress(token.contractAddress)"></span>
+            <span class="pi pi-external-link token-icon" style="cursor: pointer;" (click)="goToEtherscan(token.contractAddress)"></span>
+
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="rowexpansion" let-token>
+      <tr>
+        <td colspan="6">
+          <!-- Add less important data here -->
+          Contract Address: {{ token.contractAddress }}<br>
+          <!-- Other fields -->
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="loadingbody">
+        <tr>
+            <td colspan="8">Loading tokens data. Please wait.</td>
+        </tr>
+    </ng-template>
+  </p-table>

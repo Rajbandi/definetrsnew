@@ -45,12 +45,18 @@ async fn main() -> web3::Result<()> {
     let api_service_data = web::Data::new(api_service);
 
    match HttpServer::new(move || {
+        let cors = actix_cors::Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
         App::new()
             .app_data(api_service_data.clone()) 
             .route("/get_token/{contract_address}", web::get().to(ApiService::get_token))
             .route("/get_all_tokens", web::get().to(ApiService::get_all_tokens))
             .route("/ws/admin", web::get().to(ws_admin_index))
             .route("/ws/updates", web::get().to(ws_general_index))
+            .wrap(cors)
     })
     .bind(server_binding)? // Use the binding from the environment variable
     .run()
