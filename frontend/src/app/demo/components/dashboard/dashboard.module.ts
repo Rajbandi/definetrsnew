@@ -11,6 +11,7 @@ import { PanelMenuModule } from 'primeng/panelmenu';
 import { DashboardsRoutingModule } from './dashboard-routing.module';
 import { TokenListComponent } from '../token-list/token-list.component';
 import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
 
 @NgModule({
     imports: [
@@ -19,6 +20,7 @@ import { ToastModule } from 'primeng/toast';
         ChartModule,
         MenuModule,
         TableModule,
+        DialogModule,
         StyleClassModule,
         PanelMenuModule,
         ButtonModule,

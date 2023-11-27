@@ -25,9 +25,9 @@ export class AppLayoutComponent implements OnDestroy {
         this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
             if (!this.menuOutsideClickListener) {
                 this.menuOutsideClickListener = this.renderer.listen('document', 'click', event => {
-                    const isOutsideClicked = !(this.appSidebar.el.nativeElement.isSameNode(event.target) || this.appSidebar.el.nativeElement.contains(event.target) 
+                    const isOutsideClicked = !(this.appSidebar.el.nativeElement.isSameNode(event.target) || this.appSidebar.el.nativeElement.contains(event.target)
                         || this.appTopbar.menuButton.nativeElement.isSameNode(event.target) || this.appTopbar.menuButton.nativeElement.contains(event.target));
-                    
+
                     if (isOutsideClicked) {
                         this.hideMenu();
                     }
@@ -101,7 +101,7 @@ export class AppLayoutComponent implements OnDestroy {
             'layout-theme-dark': this.layoutService.config.colorScheme === 'dark',
             'layout-overlay': this.layoutService.config.menuMode === 'overlay',
             'layout-static': this.layoutService.config.menuMode === 'static',
-            'layout-static-inactive': this.layoutService.state.staticMenuDesktopInactive && this.layoutService.config.menuMode === 'static',
+            'layout-static-inactive': true,//this.layoutService.state.staticMenuDesktopInactive && this.layoutService.config.menuMode === 'static',
             'layout-overlay-active': this.layoutService.state.overlayMenuActive,
             'layout-mobile-active': this.layoutService.state.staticMenuMobileActive,
             'p-input-filled': this.layoutService.config.inputStyle === 'filled',

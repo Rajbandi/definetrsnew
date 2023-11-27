@@ -5,6 +5,11 @@ import { LoggingService } from '../../service/logging.service';
 import { MessageService } from 'primeng/api';
 import { Subscription, interval, startWith } from 'rxjs';
 
+interface DisplayProperty {
+    displayName: string;
+    propertyName: string;
+  }
+
 @Component({
   selector: 'app-token-list',
   templateUrl: './token-list.component.html',
@@ -13,9 +18,29 @@ import { Subscription, interval, startWith } from 'rxjs';
 export class TokenListComponent implements OnInit {
   tokens: TokenInfo[] = [];
   loading: boolean = false;
+  isExpanded: boolean = false;
+  displayDialog: boolean = false;
+  longTextContent: string = '';
+
   private tokensSubscription: Subscription;
   private tokenUpdateSubscription: Subscription;
   private updateIntervalSubscription: Subscription;
+
+  displayProperties: DisplayProperty[] = [
+    { displayName: 'Name', propertyName: 'name' },
+    { displayName: 'Symbol', propertyName: 'symbol' },
+    { displayName: 'Contract Address', propertyName: 'contractAddress' },
+    { displayName: 'Date Created', propertyName: 'createdString' },
+    { displayName: 'Total Supply', propertyName: 'totalSupply' },
+    { displayName: 'Decimals', propertyName: 'decimals' },
+    { displayName: 'Owner', propertyName: 'owner' },
+    { displayName: 'Creator', propertyName: 'creator' },
+    { displayName: 'Verified', propertyName: 'isVerified'},
+    { displayName: 'Renounce', propertyName: 'isRenounced'},
+    { displayName: 'Code', propertyName: 'code'},
+    { displayName: 'Abi', propertyName: 'abi'},
+    // Add other properties as needed, e.g., { displayName: 'Code', propertyName: 'code' }
+  ];
 
   constructor(private tokenService: TokenService, private logging: LoggingService
     ,private messageService: MessageService, private cdr: ChangeDetectorRef) {}
@@ -102,13 +127,23 @@ export class TokenListComponent implements OnInit {
       this.messageService.add({severity:'error', summary: 'Error', detail: 'Failed to copy address'});
     });
   }
+
   goToEtherscan(address: string): void {
     const url = `https://etherscan.io/token/${address}`;
     window.open(url, "_blank");
   }
+
   ngOnDestroy(): void {
     if (this.tokensSubscription) {
       this.tokensSubscription.unsubscribe();
     }
+  }
+
+  isLongText(text: string): boolean {
+    return text && text.length > 50;
+  }
+  showLongText(content: string): void {
+    this.longTextContent = content;
+    this.displayDialog = true;
   }
 }

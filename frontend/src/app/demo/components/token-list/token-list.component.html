@@ -1,4 +1,3 @@
-
 <!-- Provide table below with TokenInfo primeng table with expandable rows
 
 THis is rust code to get the token list from the contract
@@ -82,79 +81,151 @@ pub struct TokenInfo {
 </p-table> -->
 <p-toast></p-toast>
 
-<p-table [value]="tokens" [paginator]="true" [rows]="10"  [loading]="loading" [rowHover]="true" styleClass="p-datatable-gridlines token-list"
-[rowsPerPageOptions]="[10,20,50]" [responsive]="true" responsiveLayout="scroll">
-<ng-template pTemplate="caption">
-    <div class="flex justify-content-between flex-column sm:flex-row">
-        <div>Recently Added Tokens</div>
-        <div>
-            <span  class="pi pi-check-circle token-icon"></span> Verified
-            <span class="pi pi-ban token-icon"></span>Renounced
+<p-table [value]="tokens" dataKey="contractAddress" [paginator]="true" [rows]="10" [loading]="loading" [rowHover]="true"
+    styleClass="p-datatable-gridlines token-list" [rowsPerPageOptions]="[10,20,50]" [responsive]="true"
+    responsiveLayout="scroll">
+    <ng-template pTemplate="caption">
+        <div class="flex justify-content-between flex-column sm:flex-row">
+            <div>Recently Added Tokens</div>
+            <button pButton icon="pi pi-fw {{isExpanded ? 'pi-minus' : 'pi-plus'}}" label="{{isExpanded ? 'Collapse All' : 'Expand All'}}" (click)="expandAll()"></button>
+            <div>
+                <span class="pi pi-check-circle token-icon"></span> Verified
+                <span class="pi pi-user-minus token-icon"></span>Renounced
+            </div>
         </div>
-    </div>
-</ng-template>
+    </ng-template>
 
     <ng-template pTemplate="header">
-      <tr>
-        <th style="min-width: 12rem">Name
-        </th>
-        <th style="min-width: 9rem">Created
+        <tr>
+            <th style="width: 3rem"></th>
+            <th style="min-width: 12rem">Name
+            </th>
+            <th style="min-width: 9rem">Created
 
-        </th>
-        <th style="min-width: 5rem">Score
+            </th>
+            <th style="min-width: 5rem">Score
 
-        </th>
-        <th style="min-width: 12rem">Status
-        </th> <!-- Column for boolean fields -->
+            </th>
+            <th style="min-width: 12rem">Status
+            </th> <!-- Column for boolean fields -->
 
-        <th style="min-width: 12rem">Links
+            <th style="min-width: 12rem">Links
 
-        </th>
-        <!-- More important fields -->
+            </th>
+            <!-- More important fields -->
     </ng-template>
-    <ng-template pTemplate="body" let-token>
-      <tr [ngClass]="{'highlight': token.isNew}">
-        <td style='flex: 0 0 120px;'>{{ token.fullName }}
+    <ng-template pTemplate="body" let-token let-expanded="expanded">
+        <tr [ngClass]="{'highlight': token.isNew}">
+            <td>
+                <button type="button" pButton pRipple [pRowToggler]="token"
+                    class="p-button-text p-button-rounded p-button-plain"
+                    [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></button>
+            </td>
+            <td style='flex: 0 0 120px;'>{{ token.fullName }}
 
-        </td>
-        <td>
-            {{ token.createdString }}
-        </td>
-        <td>
+            </td>
+            <td>
+                {{ token.createdString }}
+            </td>
+            <td>
 
-        </td>
-        <!-- More important fields -->
-        <td>
-          <!-- Icons for boolean fields -->
-          <span *ngIf="!token.isVerified" class="pi pi-check-circle token-icon" style="color: red;" title="Not Verified"></span>
-            <span *ngIf="token.isVerified" class="pi pi-check-circle token-icon" style="color: green;" title="Verified"></span>
-            <span *ngIf="!token.isRenounced" class="pi pi-ban token-icon" style="color: red;" title="Not Renounced"></span>
-            <span *ngIf="token.isRenounced" class="pi pi-ban token-icon" style="color: orange;" title="Renounced"></span>
-            <span *ngIf="token.isScam" class="pi pi-times-circle token-icon" style="color: red;" title="Scam"></span>
-            <span *ngIf="token.isBlacklisted" class="pi pi-lock token-icon" style="color: black;" title="Blacklisted"></span>
+            </td>
+            <!-- More important fields -->
+            <td>
+                <!-- Icons for boolean fields -->
+                <span *ngIf="!token.isVerified" class="pi pi-times-circle token-icon" style="color: red;"
+                    title="Not Verified"></span>
+                <span *ngIf="token.isVerified" class="pi pi-check-circle token-icon" style="color: green;"
+                    title="Verified"></span>
+                <span *ngIf="!token.isRenounced" class="pi pi-user-minus  token-icon" style="color: red;"
+                    title="Not Renounced"></span>
+                <span *ngIf="token.isRenounced" class="pi pi-user-minus token-icon" style="color: green;"
+                    title="Renounced"></span>
+                <span *ngIf="token.isScam" class="pi pi-times-ban token-icon" style="color: red;"
+                    title="Scam"></span>
+                <span *ngIf="token.isBlacklisted" class="pi pi-lock token-icon" style="color: black;"
+                    title="Blacklisted"></span>
 
-          <!-- Add icons for other boolean fields similarly -->
-        </td>
+                <!-- Add icons for other boolean fields similarly -->
+            </td>
 
-        <td>
-            <span class="pi pi-copy token-icon" style="cursor: pointer;" (click)="copyAddress(token.contractAddress)"></span>
-            <span class="pi pi-external-link token-icon" style="cursor: pointer;" (click)="goToEtherscan(token.contractAddress)"></span>
+            <td>
+                <span class="pi pi-copy token-icon" style="cursor: pointer;"
+                    (click)="copyAddress(token.contractAddress)"></span>
+                <span class="pi pi-external-link token-icon" style="cursor: pointer;"
+                    (click)="goToEtherscan(token.contractAddress)"></span>
 
-        </td>
-      </tr>
+            </td>
+        </tr>
     </ng-template>
-    <ng-template pTemplate="rowexpansion" let-token>
+    <!-- <ng-template pTemplate="rowexpansion" let-token>
       <tr>
         <td colspan="6">
-          <!-- Add less important data here -->
+
           Contract Address: {{ token.contractAddress }}<br>
-          <!-- Other fields -->
         </td>
       </tr>
+    </ng-template> -->
+    <ng-template pTemplate="rowexpansion" let-token>
+        <tr>
+            <td colspan="7">
+                <div class="grid">
+                    <div class="col-12">
+                        <strong>Contract Address:</strong> {{ token.contractAddress }}
+                    </div>
+                    <div class="col-6">
+                        <strong>Name:</strong> {{ token.fullName }}
+                    </div>
+                    <div class="col-6">
+                        <strong>  Symbol:</strong> {{ token.symbol }}
+                    </div>
+                    <div class="col-6">
+                        <strong>Decimals: </strong>{{ token.decimals }}
+                    </div>
+                    <div class="col-6">
+                        <strong>Total Supply: </strong>{{ token.totalSupply }}
+                    </div>
+                    <div class="col-6">
+                        <strong> Is Verified: </strong>
+                        <span *ngIf="!token.isVerified" class="pi pi-times-circle token-icon" style="color: red;"></span>
+                        <span *ngIf="token.isVerified" class="pi pi-check-circle token-icon" style="color: green;"></span>
+
+                    </div>
+                    <div class="col-6">
+                        <strong> Is Renounced: </strong>
+                        <span *ngIf="!token.isRenounced" class="pi pi-user-minus token-icon" style="color: red;"></span>
+                        <span *ngIf="token.isRenounced" class="pi pi-user-minus token-icon" style="color: green;"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Code: </strong><button  pButton type="button" label="View"
+                        (click)="showLongText(token.code)"></button>
+                    </div>
+                    <div>
+                        <strong> ABI: </strong><button  pButton type="button" label="View"
+                        (click)="showLongText(token.abi)"></button>
+                    </div>
+                    <!-- <div *ngFor="let prop of displayProperties" class="col-6">
+                        <strong>{{ prop.displayName }}</strong>:
+                        <ng-container *ngIf="!isLongText(token[prop.propertyName]); else longTextTemplate">
+                            {{ token[prop.propertyName] }}
+                        </ng-container>
+                        <ng-template #longTextTemplate>
+                            <button pButton type="button" label="View"
+                                (click)="showLongText(token[prop.propertyName])"></button>
+                        </ng-template>
+                    </div> -->
+
+                </div>
+            </td>
+        </tr>
     </ng-template>
     <ng-template pTemplate="loadingbody">
         <tr>
             <td colspan="8">Loading tokens data. Please wait.</td>
         </tr>
     </ng-template>
-  </p-table>
+</p-table>
+
+<p-dialog [(visible)]="displayDialog" [modal]="true" [style]="{width: '50vw'}">
+    <pre>{{ longTextContent }}</pre>
+</p-dialog>

@@ -77,8 +77,8 @@ export class LayoutService {
         }
     }
 
-    showConfigSidebar() {
-        this.state.configSidebarVisible = true;
+    showConfigSidebar(show:boolean = true) {
+        this.state.configSidebarVisible = show;
     }
 
     isOverlay() {
