@@ -11,13 +11,16 @@ use chrono::format::format;
 use log::info;
 
 use serde_json::{json, Value};
+use tokio::sync::RwLock;
 use web3::contract;
+use web3::ethabi::token;
 use web3::types::{Address, Log, H256, U256};
 
 pub struct TokenService {
     web3_client: Web3Client, // Assuming Web3Client is defined elsewhere
     db_client: Arc<dyn DatabaseClient + 'static>,
     etherscan_client: EtherscanClient,
+    latest_tokens: RwLock<Vec<TokenInfo>>,
 }
 
 impl TokenService {
@@ -26,6 +29,7 @@ impl TokenService {
             web3_client,
             db_client,
             etherscan_client,
+            latest_tokens: RwLock::new(Vec::new()),
         }
     }
     pub async fn sync(self: Arc<Self>) -> web3::Result<()> {
@@ -85,6 +89,9 @@ impl TokenService {
                     {
                         token_info.contract_address = contract_address;
                         token_info.is_renounced = is_renounced;
+                        // if let Ok(to_address) = to_address {
+                        //     token_info.owner = to_address;
+                        // }
                     }
                 }
                 _ => {
@@ -196,10 +203,36 @@ impl TokenService {
         });
 
         WebSocketService::send_to_general_clients(&message.to_string()).await;
-
+        // Update in-memory storage
+        self.update_memory_storage(token_info.clone()).await?;
+      
         Ok(true)
     }
-
+    pub async fn update_memory_storage(&self, token_info: TokenInfo) -> Result<(), Box<dyn std::error::Error>> {
+        info!("************* Updating in-memory storage ***************");
+        let mut latest_tokens = self.latest_tokens.write().await;
+        
+        if let Some(index) = latest_tokens.iter().position(|t| t.contract_address == token_info.contract_address) {
+            info!("Token exists, updating it");
+            // Token exists, update it
+            latest_tokens[index] = token_info;
+        } else {
+            info!("Token does not exist, insert at the beginning");
+            // Token does not exist, insert at the beginning
+            latest_tokens.insert(0, token_info);
+    
+            // Ensure we don't exceed 100 tokens
+            info!("Checking if latest tokens exceed 100");
+            if latest_tokens.len() > 100 {
+                info!("Latest tokens exceed 100, removing the oldest token");
+                latest_tokens.pop(); // Remove the oldest token
+            }
+        }
+    
+        info!("************* In-memory storage updated **********");
+        Ok(())
+    }
+    
     pub fn parse_new_token(
         &self,
         log: &Log,
@@ -281,10 +314,60 @@ impl TokenService {
         query: TokenQuery,
     ) -> Result<Vec<TokenInfo>, Box<dyn std::error::Error>> {
         self.db_client
-            .get_all_tokens(query)
+            .get_all_tokens(&query)
             .await
             .map_err(|e| e.into())
     }
+
+    pub async fn update_latest_tokens(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let query = TokenQuery { 
+            name: None, 
+            symbol: None, 
+            contract_address: None, 
+            is_verified: None, 
+            is_renounced: None, 
+            is_active: None, 
+            from_date: None, 
+            to_date: None, 
+            sort_by: Some("date_created_desc".to_string()), 
+            limit: Some(100), // Example: limit to 100 tokens
+            offset: Some(0) 
+        };
+        info!("********** Getting all tokens from database");
+        let tokens = self.db_client.get_all_tokens(&query).await?;
+        info!("********** Got all tokens from database {}", tokens.len());
+        // Properly await the future returned by write()
+        info!("********** Updating latest tokens in memory");
+        let mut latest_tokens = self.latest_tokens.write().await;
+        *latest_tokens = tokens;
+        info!("********** Updated latest tokens in memory");
+        Ok(())
+    }
+    
+    pub async fn get_latest_tokens(&self) -> Result<Vec<TokenInfo>, Box<dyn std::error::Error>> {
+        // First, try to read from the in-memory storage.
+        {
+            info!("********** Readiing latest tokens tokens");
+            let latest_tokens = self.latest_tokens.read().await;
+            if !latest_tokens.is_empty() {
+                info!("Latest tokens found in memory");
+                return Ok(latest_tokens.clone());
+            }
+        }
+        info!("Latest tokens not found in memory");
+
+        // If the in-memory storage is empty, update it from the database.
+        self.update_latest_tokens().await?;
+        info!("Latest tokens updated from database");
+
+        info!("Now reading latest tokens from memory");
+        // Read and return the latest tokens from the updated in-memory storage.
+        let latest_tokens = self.latest_tokens.read().await;
+        info!("Latest tokens read from memory ");
+        Ok(latest_tokens.clone())
+
+    }
+    
 
     fn convert_topic_to_address(&self, hash: H256) -> Address {
         Address::from_slice(&hash.0[12..])

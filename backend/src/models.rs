@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, SqlitePool};
 
 #[serde(rename_all = "camelCase")]
-#[derive(Serialize, Deserialize, Default, Debug, FromRow)]
+#[derive(Serialize, Deserialize, Default, Debug, FromRow, Clone)]
 pub struct TokenInfo {
     pub contract_address: String,
     pub name: String,
@@ -24,17 +24,17 @@ pub struct TokenInfo {
     pub previous_contracts: i32,
     pub liquidity_pool_address: Option<String>,
     pub liqudity_period: i32,
-    pub initial_liquidity: f32,
-    pub current_liquidity: f32,
+    pub initial_liquidity: f64,
+    pub current_liquidity: f64,
     pub is_liquidy_locked: bool,
-    pub locked_liquidity: f32,
+    pub locked_liquidity: f64,
     pub is_tax_modifiable: bool,
-    pub sell_tax: f32,
-    pub buy_tax: f32,
-    pub transfer_tax: f32,
+    pub sell_tax: f64,
+    pub buy_tax: f64,
+    pub transfer_tax: f64,
     pub score: i32,
     pub holders_count: i32,
-    pub data: Option<serde_json::Value>,
+    pub data: Option<String>,
     pub code: Option<String>,
     pub abi: Option<String>,
     pub error: Option<String>,

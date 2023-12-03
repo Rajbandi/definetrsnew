@@ -1,6 +1,6 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
 use definetrsnew::{
-    services::ApiService, clients::{DbClientSqlite, EtherscanClient}, clients::DatabaseClient,
+    services::ApiService, clients::{DbClientPostgres, EtherscanClient}, clients::DatabaseClient,
     services::TokenService, clients::Web3Client, websocket::{ws_admin_index, ws_general_index},
 };
 use dotenv::dotenv;
@@ -16,7 +16,7 @@ async fn main() -> web3::Result<()> {
     let web3_client = Web3Client::new(&web3_url).await?;
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set for SQLite");
-    let db_client: Arc<dyn DatabaseClient> = Arc::new(DbClientSqlite::new(&db_url).await.unwrap());
+    let db_client: Arc<dyn DatabaseClient> = Arc::new(DbClientPostgres::new(&db_url).await.unwrap());
 
     info!("Starting token sync service");
     // let token_service = TokenService::new(client, db_client);
@@ -54,6 +54,7 @@ async fn main() -> web3::Result<()> {
             .app_data(api_service_data.clone()) 
             .route("/get_token/{contract_address}", web::get().to(ApiService::get_token))
             .route("/get_all_tokens", web::get().to(ApiService::get_all_tokens))
+            .route("/refresh_latest_tokens", web::get().to(ApiService::refresh_latest_tokens))
             .route("/ws/admin", web::get().to(ws_admin_index))
             .route("/ws/updates", web::get().to(ws_general_index))
             .wrap(cors)

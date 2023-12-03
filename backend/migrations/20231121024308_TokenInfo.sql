@@ -1,7 +1,7 @@
 -- Add migration script here
 -- token_info_migration.sql
 
-CREATE TABLE IF NOT EXISTS token_info (
+CREATE TABLE token_info (
     contract_address TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     symbol TEXT NOT NULL ,
@@ -34,6 +34,6 @@ CREATE TABLE IF NOT EXISTS token_info (
     abi TEXT,
     data TEXT , -- Storing JSON as text
     error TEXT,
-    date_created DATETIME NOT NULL,
-    date_updated DATETIME 
+    date_created TIMESTAMP NOT NULL,
+    date_updated TIMESTAMP 
 );

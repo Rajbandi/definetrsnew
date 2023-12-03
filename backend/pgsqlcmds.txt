@@ -1,0 +1,9 @@
+ nano /etc/postgresql/12/main/pg_hba.conf
+nano /etc/postgresql/12/main/postgresql.conf
+
+ psql -U postgres
+
+\password postgres
+\q
+
+sudo service postgresql restart
