@@ -21,12 +21,21 @@ impl ApiService {
         }
     }
 
-    pub async fn get_all_tokens(data: web::Data<ApiService>) -> impl Responder {
+
+    pub async fn get_all_tokens(data: web::Data<ApiService>, query: web::Query<TokenQuery>) -> impl Responder {
+        match data.token_service.get_all_tokens(query.into_inner()).await {
+            Ok(tokens) => HttpResponse::Ok().json(tokens),
+            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        }
+    }
+    
+    pub async fn get_latest_tokens(data: web::Data<ApiService>) -> impl Responder {
         match data.token_service.get_latest_tokens().await {
             Ok(tokens) => HttpResponse::Ok().json(tokens),
             Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
         }
     }
+    
     pub async fn refresh_latest_tokens(data: web::Data<ApiService>) -> impl Responder {
         match data.token_service.update_latest_tokens().await {
             Ok(_) => HttpResponse::Ok().body("Latest tokens refreshed successfully"),

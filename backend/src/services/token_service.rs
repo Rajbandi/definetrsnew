@@ -1,4 +1,3 @@
-use std::f32::consts::E;
 use std::{str::FromStr, sync::Arc};
 
 use crate::clients::{DatabaseClient, EtherscanClient};
@@ -7,13 +6,13 @@ use crate::models::TokenQuery;
 use crate::services::WebSocketService;
 use crate::utils::TokenUtil;
 use crate::{constants::*, models::TokenInfo};
-use chrono::format::format;
+
 use log::info;
 
 use serde_json::{json, Value};
 use tokio::sync::RwLock;
-use web3::contract;
-use web3::ethabi::token;
+
+
 use web3::types::{Address, Log, H256, U256};
 
 pub struct TokenService {
@@ -68,6 +67,7 @@ impl TokenService {
                     if let Ok((contract_address, token0_address, token1_address)) = pair_result {
                         token_info.contract_address = contract_address;
                         token_info.is_v3 = false;
+                        
                     }
                 }
                 topic if topic == &H256::from_str(TOPIC_V3_NEW_TOKEN).unwrap() => {
@@ -77,6 +77,7 @@ impl TokenService {
                     if let Ok((contract_address, token0_address, token1_address)) = pair_result {
                         token_info.contract_address = contract_address;
                         token_info.is_v3 = true;
+                       
                     }
                 }
                 topic if topic == &H256::from_str(TOPIC_OWNER_TRANSFER).unwrap() => {
@@ -89,9 +90,7 @@ impl TokenService {
                     {
                         token_info.contract_address = contract_address;
                         token_info.is_renounced = is_renounced;
-                        // if let Ok(to_address) = to_address {
-                        //     token_info.owner = to_address;
-                        // }
+                        token_info.owner = to_address.clone();
                     }
                 }
                 _ => {
@@ -364,6 +363,7 @@ impl TokenService {
         // Read and return the latest tokens from the updated in-memory storage.
         let latest_tokens = self.latest_tokens.read().await;
         info!("Latest tokens read from memory ");
+
         Ok(latest_tokens.clone())
 
     }
