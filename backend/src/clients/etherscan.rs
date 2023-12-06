@@ -5,6 +5,15 @@ use web3::ethabi::token;
 use dotenv::dotenv;
 use env_logger;
 
+use crate::constants;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct EtherscanResponse {
+    pub status: String,
+    pub message: String,
+    pub result: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EtherscanTokenTx {
     status: String,
@@ -64,7 +73,39 @@ pub struct EtherscanQuery {
     sort: Option<String>,
     api_key: Option<String>,
     start_block: Option<String>,
-    end_block: Option<String>
+    end_block: Option<String>,
+    from_block: Option<String>,
+    to_block: Option<String>,
+    timestamp: Option<String>,
+    closest: Option<String>,
+    topic0: Option<String>,
+    topic1: Option<String>,
+    topic2: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EtherscanLogResponse {
+    status: String,
+
+    message: String,
+
+    result: Vec<EtherscanLogResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EtherscanLogResult {
+    address: Option<String>,
+    topics: Vec<String>,
+    data:Option<String>,
+    block_number: Option<String>,
+    block_hash: String,
+    time_stamp: Option<String>,
+    gas_price: Option<String>,
+    gas_used: Option<String>,
+    log_index: String,
+    transaction_hash: String,
+    transaction_index: String,
 }
 
 pub struct EtherscanClient {
@@ -91,13 +132,53 @@ impl EtherscanClient {
         if !query.address.is_none() {
             query_vec.push(format!("address={}", query.address.unwrap()));
         }
+
+        if !query.topic0.is_none() {
+            query_vec.push(format!("topic0={}", query.topic0.clone().unwrap()));
+        }
         
+        if !query.topic1.is_none() {
+            query_vec.push(format!("topic1={}", query.topic1.clone().unwrap()));
+        }
+
+        if !query.topic2.is_none() {
+            query_vec.push(format!("topic2={}", query.topic2.clone().unwrap()));
+        }
+
+        if !query.topic0.is_none() && !query.topic1.is_none() {
+            query_vec.push(format!("topic0_1_opr=and"));
+        }
+
+        if !query.topic1.is_none() && !query.topic2.is_none() {
+            query_vec.push(format!("topic1_2_opr=and"));
+        }
+
+        if !query.topic0.is_none() && !query.topic2.is_none() {
+            query_vec.push(format!("topic0_2_opr=and"));
+        }
+          
         if !query.start_block.is_none() {
             query_vec.push(format!("startblock={}", query.start_block.unwrap()));
         }
 
         if !query.end_block.is_none() {
             query_vec.push(format!("endblock={}", query.end_block.unwrap()));
+        }
+
+        if !query.from_block.is_none() {
+            query_vec.push(format!("fromBlock={}", query.from_block.unwrap()));
+        }
+
+        if !query.to_block.is_none() {
+            query_vec.push(format!("toBlock={}", query.to_block.unwrap()));
+        }
+        
+        if !query.timestamp.is_none() {
+            query_vec.push(format!("timestamp={}", query.timestamp.unwrap()));
+        }
+
+        if !query.closest.is_none() {
+            query_vec.push(format!("closest={}", query.closest.unwrap()));
         }
 
         if !query.page.is_none() {
@@ -180,6 +261,83 @@ impl EtherscanClient {
         
         Ok(token_info)
     }
+
+    
+    pub async fn get_block_number_by_timestamp(&self, 
+        timestamp: String) -> Result<String, Box<dyn std::error::Error>> {
+
+        let mut query = EtherscanQuery :: default();
+        query.module = Some(String::from("block"));
+        query.action = Some(String::from("getblocknobytime"));
+        query.timestamp = Some(timestamp.clone());
+        query.closest = Some(String::from("before"));
+        let url = self.resolve_url(query);
+        info!("URL: {:?}", url);
+        let response = reqwest::get(&url).await?.json::<EtherscanResponse>().await?;
+        if response.result.is_empty() {
+            return Err(format!("No block number found for timestamp: {:?}", timestamp).into());
+        }
+        Ok(response.result)
+    }
+
+    pub async fn get_logs_by_address(&self, 
+        address: String,
+        from_block: String,
+        to_block: Option<String>,
+        topic0: Option<String>,
+        topic1: Option<String>,
+        topic2: Option<String>,
+        
+    ) -> Result<EtherscanLogResponse, Box<dyn std::error::Error>> {
+        let mut query = EtherscanQuery :: default();
+        query.module = Some(String::from("logs"));
+        query.action = Some(String::from("getLogs"));
+        query.address = address.clone().into();
+       
+        query.from_block = Some(String::from(from_block));
+        if !to_block.is_none() {
+            query.to_block = to_block;
+        }
+        else {
+            query.to_block = Some(String::from("latest"));
+        }
+        if !topic0.is_none() {
+            query.topic0 = topic0;
+        }
+        if !topic1.is_none() {
+            query.topic1 = topic1;
+        }
+        if !topic2.is_none() {
+            query.topic2 = topic2;
+        }
+        let url = self.resolve_url(query);
+        info!("URL: {:?}", url);
+        let response = reqwest::get(&url).await?.json::<EtherscanLogResponse>().await?;
+        if response.result.is_empty() {
+            return Err(format!("No logs found for address: {:?}", address).into());
+        }
+        Ok(response)
+    }
+
+    pub async fn get_logs_by_address_from_timestamp(&self, 
+        address: String,
+        timestamp: String,
+    ) -> Result<EtherscanLogResponse, Box<dyn std::error::Error>> {
+        let block_number = self.get_block_number_by_timestamp(timestamp).await?;
+        let response = self.get_logs_by_address(address, block_number, None, None,None,None).await?;
+        Ok(response)
+    }
+    
+    pub async fn get_transfer_logs_by_address_from_timestamp(&self, 
+        address: String,
+        timestamp: String,
+    ) -> Result<EtherscanLogResponse, Box<dyn std::error::Error>> {
+        let block_number = self.get_block_number_by_timestamp(timestamp).await?;
+        let topic0 = Some(constants::TOPIC_TRANSFER.to_string());
+        let response = self.get_logs_by_address(address, block_number, None, topic0,None,None).await?;
+        Ok(response)
+    }
+
 }
 
 #[cfg(test)]
@@ -241,5 +399,6 @@ mod tests {
         // Assertions...
         assert_eq!(response.status, "0");
     }
+
     // Similar structure for other tests
 }

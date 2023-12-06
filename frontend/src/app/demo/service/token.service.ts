@@ -34,7 +34,7 @@ export class TokenService {
 
   async getTokens(): Promise<TokenInfo[]> {
     this.logging.info('Loading tokens...');
-    let tokens_url = this.apiUrl +'/get_all_tokens?sort_by=date_created desc&limit=50';
+    let tokens_url = this.apiUrl +'/get_latest_tokens';
     return await firstValueFrom(this.http.get<TokenInfo[]>(tokens_url));
   }
   private connectToWebSocket(): void {
